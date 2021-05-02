@@ -25,13 +25,13 @@ def save_imlist(filelist):
             try:
                 Image.open(infile).save(outfile)
             except IOError:
-                print "cannot convert", infile
+                print("cannot convert", infile)
 
 # %%
 def get_imlist(path):
     return [os.path.join(path,f) for f in os.listdir(path) if f.endswith('.jpg')]
     
-list = get_imlist(public_data_path)
+public_data_list = get_imlist(public_data_path)
 # %%
 pil_img.thumbnail((128,128))
 
@@ -145,7 +145,7 @@ print("imshpae ::{0} , im dtype :: {1}".format(im.shape, im.dtype))
 # im[-2,:](orim[-2]) #second to last row
 # %%
 from PIL import Image
-from numpy import *
+from numpy import *linalg, linalg, 
 
 im = array(Image.open(public_data_path+'/empire.jpg').convert('L'))
 im2 = 255
@@ -191,3 +191,49 @@ def compute_average(imlist):
     averageim /= len(imlist)
 
     return array(averageim, 'uint8')
+
+# %%
+
+def pca(X):
+
+    # get dimensions
+    num_data, dim = X.shape
+    # center data
+    mean_X = X.mean(axis=0)
+    X = X - mean_X
+
+    if dim>num_data:
+        M = dot(X,X.T)
+        e, EV = linalg.eigh(M)
+        tmp = dot(X.T,EV)
+        V = tm[::-1]
+        S = sqrt(e)[::-1]
+
+        for i in range(V.shape[1]):
+            V[:,i] /=S
+    else:
+        U,S,A = linalg.svd(X)
+        V = V[:num_data]
+
+    return V,S,mean_X
+# %%
+
+im = array(Image.open(public_data_list[0]))
+m,n = im.shape[0:2]
+imnbr = len(public_data_list)
+
+immatrix = array([array(Image.open(im)).flatten() for im in public_data_list], 'f')
+
+V,S, immean = pca.pca(immatrix)
+
+figuxre()
+gray()
+subplot(2,4,1)
+imshow(immean.reshape(m,n))
+
+for i in range(7):
+    subplot(2,4,i+2)
+    imshow(V[i].reshape(m,n))
+
+show()
+# %%
