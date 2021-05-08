@@ -145,7 +145,7 @@ print("imshpae ::{0} , im dtype :: {1}".format(im.shape, im.dtype))
 # im[-2,:](orim[-2]) #second to last row
 # %%
 from PIL import Image
-from numpy import *linalg, linalg, 
+from numpy import *
 
 im = array(Image.open(public_data_path+'/empire.jpg').convert('L'))
 im2 = 255
@@ -217,14 +217,25 @@ def pca(X):
 
     return V,S,mean_X
 # %%
+from PIL import Image
+from numpy import * 
+from pylab import * 
+#%%
 
 im = array(Image.open(public_data_list[0]))
 m,n = im.shape[0:2]
 imnbr = len(public_data_list)
+print("what is :: {0}".format(public_data_list[0]))
 
-immatrix = array([array(Image.open(im)).flatten() for im in public_data_list], 'f')
+# test = [array(Image.open(im)).flatten() for im in public_data_list]
 
-V,S, immean = pca.pca(immatrix)
+immatrix=np.array([array(Image.open(im)).flatten()for im in public_data_list],'f')
+
+#immatrix = [array(Image.open(im),'f').flatten() for im in public_data_list]
+
+#V,S, immean = pca.pca(immatrix)
+V,S, immean = pca(immatrix)
+
 
 figuxre()
 gray()
@@ -236,4 +247,42 @@ for i in range(7):
     imshow(V[i].reshape(m,n))
 
 show()
+# %%
+
+import pickle
+
+f = open('font_pca_modes.pkl','wb')
+pickle.dump(immean,f)
+pickle.dump(V,f)
+f.close()
+# %%
+f=open('font_pca_modes.pkl','rb')
+immean=pickle.load(f)
+V=pickle.load(f)
+f.close()
+# %%
+with open('font_pca_modes.pkl', 'wb') as f:
+    pickle.dump(immean,f)
+    pickle.dump(V,f)
+# %%
+with open('font_pca_modes.pkl', 'rb') as f:
+    immean = pickle.load(f)
+    V = pickle.load(f)
+
+savetxt('test.txt',x,'%i')
+x = loadtxt('test.txt')
+#%%
+import PIL.Image as pilimg
+import numpy as np
+from scipy.ndimage import filters
+
+im = np.array(pilimg.open(public_data_path+'/empire.jpg').convert('L'))
+im2 = filters.gaussian_filter(im,5)
+
+# %%
+image =np.array(pilimg.open(public_data_path+'/empire.jpg'))
+image2 = np.zeros(image.shpae)
+
+for i in range(3):
+    image2[:,:,i] = filters.gaussian_filter(im[:,:,i],5)
 # %%
