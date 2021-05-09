@@ -153,6 +153,7 @@ im3 = (100.0/255) * im + 100
 im4 = 255.0 * (im/255.0)**2
 # %%
 print('min :: {0}, max :: {1} '.format(int(im.min()), int(im.max())))
+#%%
 # %%
 pil_img = Image.fromarray(im)
 
@@ -272,17 +273,46 @@ with open('font_pca_modes.pkl', 'rb') as f:
 savetxt('test.txt',x,'%i')
 x = loadtxt('test.txt')
 #%%
-import PIL.Image as pilimg
-import numpy as np
-from scipy.ndimage import filters
+# import PIL.Image as pilimg
+# # from PIL import Image
+# import numpy as np
+# # from numpy import * 
+# from scipy.ndimage import filters
+import matplotlib.image as mpimg
+import matplotlib.pyplot as plt
+from PIL import Image
+from numpy import *
 
-im = np.array(pilimg.open(public_data_path+'/empire.jpg').convert('L'))
+im = array(Image.open(public_data_path+'/empire.jpg').convert('L'))
+im_shape = im.shape
+# im2 = filters.gaussian_filter(im,5)
+# im = mpimg.imread(public_data_path+'/empire.jpg')
 im2 = filters.gaussian_filter(im,5)
-
 # %%
-image =np.array(pilimg.open(public_data_path+'/empire.jpg'))
-image2 = np.zeros(image.shpae)
 
+im = array(Image.open(public_data_path+'/empire.jpg'))
+image2 = np.zeros(im.shape)
 for i in range(3):
     image2[:,:,i] = filters.gaussian_filter(im[:,:,i],5)
+
+image2 = uint8(image2)
+# %%
+image2 = array(image2, 'uint8')
+# %%
+plt.imshow(image2)
+# %%
+
+from PIL import Image
+from numpy import * 
+from scipy.ndimage import filters
+
+im = array(Image.open(public_data_path+'/empire.jpg').convert('L'))
+imx = np.zeros(im.shape)
+# %%
+filters.sobel(im,1,imx)
+# %%
+imy = zeros(im.shape)
+filters.sobel(im,0,imy)
+# %%
+magnitude = sqrt(imx**2+imy**2)
 # %%
