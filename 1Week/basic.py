@@ -2,6 +2,7 @@
 #numpy와 pil관련 라이브러리 간단한 예제 소스.
 
 from PIL import Image
+from numpy.ma import maximum
 from pylab import *
 #%%
 public_data_path = "../data"
@@ -145,7 +146,7 @@ print("imshpae ::{0} , im dtype :: {1}".format(im.shape, im.dtype))
 # im[-2,:](orim[-2]) #second to last row
 # %%
 from PIL import Image
-from numpy import *
+from numpy import *zeros, linalg, zeros, zeros, 
 
 im = array(Image.open(public_data_path+'/empire.jpg').convert('L'))
 im2 = 255
@@ -305,14 +306,132 @@ plt.imshow(image2)
 from PIL import Image
 from numpy import * 
 from scipy.ndimage import filters
+# import matplotlib.pyplot as plt
 
 im = array(Image.open(public_data_path+'/empire.jpg').convert('L'))
 imx = np.zeros(im.shape)
 # %%
 filters.sobel(im,1,imx)
+# x축 방향
+imshow(imx)
 # %%
 imy = zeros(im.shape)
 filters.sobel(im,0,imy)
+# y축 방향
+imshow(imy)
 # %%
 magnitude = sqrt(imx**2+imy**2)
+
+
+imshow(magnitude)
+# %%
+
+sigma = 5
+
+imx = zeros(im.shape)
+filters.gaussian_filter(im, (sigma, sigma), (0,1),imx)
+imy = zeros(im.shape)
+filters.gaussian_filter(im, (sigma, sigma), (1,0),imy)
+
+fig = figure()
+rows = 1
+cols = 2
+
+ax1 = fig.add_subplot(rows, cols, 1)
+ax1.imshow(imx)
+ax1.set_title('x')
+ax1.axis("off")
+
+ax2 = fig.add_subplot(rows, cols,2)
+ax2.imshow(imy)
+ax2.set_title('y')
+ax2.axis("off")
+# %%
+
+from scipy.ndimage import measurements, morphology
+
+im = array(Image.open(public_data_path+'/houses.png').convert('L'))
+im = 1*(im<128)
+
+labels, nbr_objects = measurements.label(im)
+
+print("number of objects : {0} im shpae :: {1}".format(nbr_objects,im.shape))
+# %%
+im_open = morphology.binary_opening(im, ones((9,5)), iterations=2)
+
+labels_open, nbr_objects_open = measurements.label(im_open)
+print("number of objects : {0}, im shape :: {1}".format(nbr_objects_open,im_open.shape))
+
+# %%
+import scipy.io
+
+data = scipy.io.loadmat(public_data_path+'/test.mat')
+
+data = {}
+data['x'] = x
+scipy.io.savemat(public_data_path+'/test.mat',data)
+# %%
+
+import scipy.misc
+# imsave('test.jpg',im)
+scipy.misc.imsave('test.jpg',im)
+#왜 없냐?
+
+lena = scipy.misc.lena()
+# %%
+from numpy import *
+
+def denoise(im, U_init, tolerance=0.1, tau=0.125, tv_weight=100):
+
+    """
+    
+    An implementation of the Rudin Osher Fatemi(ROF) denoising model using
+    the numerical procedure presented in eq(11)
+
+    """
+    m,n = im.shape
+
+    U = U_init
+    Px = im
+    Py = im
+    error =1
+
+    while(error > tolerance):
+        Uold = U
+
+        # gradient of primal variable
+        GradUx = roll(U, -1, axis = 1)-U
+        GradUy = roll(U, -1, axis = 0)-U
+
+        PxNew = Px + (tau/tv_weight)*GradUx
+        PyNew = Py + (tau/tv_weight)*GradUy
+        NormNew = maximum(1, sqrt(PxNew**2 + PyNew**2))
+
+        Px = PxNew/NormNew
+        Py = PyNew/NormNew
+
+        RxPx = roll(Px,1,axis=1)
+        RyPy = roll(Py,1,axis=0)
+
+        DivP = (Px-RxPx) + (Py-RyPy)
+        U = im + tv_weight*DivP
+
+        error = linalg.norm(U-Uold)/sqrt(n*m)
+
+    return U,im-U
+# %%
+
+from numpy import *
+from numpy import random
+from scipy.ndimage import filters
+
+im = zeros((500,500))
+im[100:400, 100:400] = 128
+im[200:300, 200:300] = 255
+im = im + 30*random.standard_normal((500,500))
+
+U,T = denoise(im,im)
+G = filters.gaussian_filter(im,10)
+
+imshow(G)
 # %%
