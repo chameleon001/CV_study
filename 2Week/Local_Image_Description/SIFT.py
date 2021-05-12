@@ -87,4 +87,16 @@ def match(desc1, desc2):
     dist_ratio = 0.6
     desc1_size = desc1.shape
 
-    matchscores = zeros    
+    matchscores = zeros((desc1_size[0],1),'int')
+    desc2t = desc2.T
+
+    for i in range(desc1_size[0]):
+        dotprods = dot(desc1[i,:],desc2t)
+        dotprods = 0.9999*dotprods
+
+        indx = np.argsort(np.arccos(dotprods))
+
+        if np.arccos(dotprods)[indx[0]] < dist_ratio * np.arccos(dotprods)[indx[1]]:
+            matchscores[i] = int(indx[0])
+
+    return matchscores
