@@ -13,7 +13,7 @@ public_data_path = "../../data"
 # %%
 ## SIFT
 
-def process_iamge(image_name, result_name, params= '--edge-thresh10--peak-thresh5'):
+def process_image(image_name, result_name, params= '--edge-thresh10--peak-thresh5'):
     # process an image and save the result in a file
 
     if image_name[-3:] != 'pgm':
@@ -68,8 +68,11 @@ im1 = np.array(Image.open(public).convert('L'))
 
 #이거 안되는데.. unkonwn file extension error
 # pgm을 쓰면 디코더 에러나옴
+# https://www.programmersought.com/article/25083724855/
+#  라이브러리를 고쳐야함
 process_name = 'empire.sift'
-process_iamge(public, process_name)
+process_image(public, process_name)
+
 l1, d1 = read_features_from_file(process_name)
 
 plt.figure()
@@ -113,3 +116,27 @@ def match_twosided(desc1, desc2):
             matches_12[n] = 0
     
     return matches_12
+
+#%%
+
+nbr_images = len(imlist)
+matchscores = np.zeros((nbr_images,nbr_images))
+
+for i in range(nbr_images):
+    for j in range(i,nbr_images):
+        print("comparing :: {}, {}".format(imlist[i],imlist[j]))
+        
+        l1, d1 = read_features_from_file(featlist[i])
+        l2, d2 = read_features_from_file(featlist[j])
+
+        matches = match_twosided(d1,d2)
+
+        nbr_matches = sum(matches >0)
+        print("number of matches = {}".format(nbr_matches))
+        matchscores[i,j] = nbr_matches
+
+
+for i in range(nbr_images):
+    for j in range(i+1, nbr_images):
+        matchscores[j,i] = matchscores[i,j]
+# %%
