@@ -73,6 +73,25 @@ def Haffine_from_points(fp, tp):
     fp_cond = np.dot(C1,fp)
 
     # to points
-    m = np.mean
+    m = np.mean(tp[:2], axis=1)
+    C2 = C1.copy()
+    C2[0][2] = -m[0]/maxstd
+    C2[1][2] = -m[1]/maxstd
+    tp_cond = np.dot(C2,tp)
 
+    A = np.concatenate((fp_cond[:2],tp_cond[:2]), axis=0)
+
+    U,S,V = np.linalg.svd(A.T)
+
+    tmp = V[:2].T
+    B = tmp[:2]
+    C = tmp[2:4]
+
+    tmp2 = np.concatenate((np.dot(C, np.linalg.pinv(B)), np.zeros((2,1))), axis=1)
+
+    H = np.vstack((tmp2, [0,0,1]))
+
+    H = np.dot(np.linalg.inv(C2), np.dot(H,C1))
+
+    return H/H[2,2]
 #%%
