@@ -1,10 +1,12 @@
 #%%
 import numpy as np
 from numpy import linalg
+from numpy.lib.npyio import loadtxt
 from numpy.random import random
 from scipy import ndimage
 import matplotlib.pylab as plt
 from PIL import Image
+import scipy
 import Homographies
 
 # transformed_im = ndimage.affine_transform(im, A, b, size)
@@ -45,8 +47,8 @@ def alpha_for_triangle(points,m,n):
     """
     alpha = np.zeros((m,n))
 
-    for i in range(min(points[0]), max(points[0])):
-        for j in range(min(points[1]), max(points[1])):
+    for i in range(int(min(points[0])), int(max(points[0]))):
+        for j in range(int(min(points[1])), int(max(points[1]))):
             x = np.linalg.solve(points, [i,j,1])
             if min(x) >0:
                 alpha[i,j] =1
@@ -159,4 +161,130 @@ def pw_affine(fromim, toim, fp, tp, tri):
     im[alpha>0] = im_t[alpha>0]
 
     return im
+# %%
+def plot_mesh(x,y,tri):
+
+    for t in tri:
+        t_ext = [t[0], t[1], t[2], t[0]]
+        plt.plot(x[t_ext], y[t_ext], 'r')
+#%%
+
+fromim = np.array(Image.open('../data/sunset_tree.jpg'))
+x,y = np.meshgrid(range(5), range(6))
+
+x = (fromim.shape[1]/4 * x.flatten())
+y = (fromim.shape[0]/5 * y.flatten())
+
+tri = triangulate_points(x,y)
+
+im = np.array(Image.open('../data/turningtorso1.jpg'))
+tp = loadtxt('../data/turningtorso1_points.txt')
+
+fp = np.vstack((y,x,np.ones((1,len(x)))))
+tp = np.vstack((tp[:,1], tp[:,0], np.ones((1,len(tp)))))
+
+im = pw_affine(fromim, im, fp, tp, tri)
+
+plt.figure()
+plt.imshow(im)
+plot_mesh(tp[1], tp[0], tri)
+plt.axis('off')
+plt.show()
+# %%
+
+from xml.dom import minidom
+
+def read_points_from_xml(xmlFileName):
+
+    xmldoc = minidom.parse(xmlFileName)
+    facelist = xmldoc.getElementsByTagName('face')
+    faces = {}
+
+    for xmlFace in facelist:
+        fileName = xmlFace.attributes['file'].value
+        xf = int(xmlFace.attributes['xf'].value)
+        yf = int(xmlFace.attributes['yf'].value)
+        xs = int(xmlFace.attributes['xs'].value)
+        ys = int(xmlFace.attributes['ys'].value)
+        xm = int(xmlFace.attributes['xm'].value)
+        ym = int(xmlFace.attributes['ym'].value)
+
+        faces[fileName] = np.array([xf,yf,xs,ys,xm,ym])
+
+    return faces
+
+
+# %%
+
+from scipy import linalg
+
+def compute_rigid_transform(refpoints, points):
+
+    print(points)
+    A = np.array([ 
+                [points[0], -points[1], 1, 0],
+                [points[1], points[0], 0, 1],
+                [points[2], -points[3], 1, 0],
+                [points[3], points[2], 0, 1],
+                [points[4], -points[5], 1, 0],
+                [points[5], points[4], 0, 1]
+                ])
+
+    y = np.array([refpoints[0],
+    refpoints[1],
+    refpoints[2],
+    refpoints[3],
+    refpoints[4],
+    refpoints[5]])
+
+    a,b,tx,ty = linalg.lstsq(A,y)[0]
+    R = np.array([[a,-b], [b,a]])
+
+    return R, tx, ty
+# %%
+from scipy import ndimage
+import scipy
+import os
+
+def rigid_alignment(faces, path, plotflag=False):
+    """
+    Align images rigidly and save as new images.
+    path determines where the aligned images are saved
+    set plotflag = True to plot the images.
+    """
+
+    # take the points in the first image as refer points
+
+    #책은 왜 항상 안될까..
+    # refpoints = faces.values()[0]
+    values_view = faces.values()
+    value_iter = iter(values_view)
+    refpoints = next(value_iter)
+    print(refpoints)
+    for face in faces:
+        points = faces[face]
+
+        R, tx, ty = compute_rigid_transform(refpoints, points)
+        T = np.array([[R[1][1], R[1][0], R[0][1], R[0][0]]])
+
+        im = np.array(Image.open(os.path.join(path, face)))
+        im2 = np.zeros(im.shape, 'uint8')
+
+        for i in range(len(im.shape)):
+            im2[:,:,i] = ndimage.affine_transform(im[:,:,i],linalg.inv(T),offset=[-ty,-tx])
+        
+        if plotflag:
+            plt.imshow(im2)
+            plt.show()
+
+        h,w = im2.shape[:2]
+        border = (w+h)/20
+
+        scipy.imsave(os.path.join(path,'aligned/'+face),im2[border:h-border,border:w-border,:])
+# %%
+
+xmlFileName = '../data/jkfaces.xml'
+points = read_points_from_xml(xmlFileName)
+
+rigid_alignment(points, '../data/jkfaces/')
 # %%
