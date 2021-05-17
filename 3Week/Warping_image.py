@@ -1,6 +1,7 @@
 #%%
 import numpy as np
 from numpy import linalg
+from numpy.random import random
 from scipy import ndimage
 import matplotlib.pylab as plt
 from PIL import Image
@@ -99,4 +100,63 @@ plt.imshow(im4)
 plt.axis('equal')
 plt.axis('off')
 plt.show()
+# %%
+
+# import matplotlib.delaunay as md
+from scipy.spatial import Delaunay
+#matplotlib 에서 scipy spatial Delaunay로 바뀜.
+
+x,y = np.array(np.random.standard_normal((2,100)))
+# centers, edges, tri, neighbors = Delaunay(x,y)
+tri= Delaunay(np.c_[x,y,]).simplices
+
+plt.figure()
+
+for t in tri:
+    t_ext = [t[0], t[1], t[2], t[0]] 
+    plt.plot(x[t_ext], y[t_ext], 'r')
+
+plt.plot(x,y,'*')
+plt.axis('off')
+plt.show()
+# %%
+
+def triangulate_points(x,y):
+    tri= Delaunay(np.c_[x,y,]).simplices
+
+    return tri
+# %%
+def pw_affine(fromim, toim, fp, tp, tri):
+    """
+    Warp triangular patches from an image
+    fromim = image to warp
+    toim = destination image
+    fp = from points in hom. coordinates
+    tp = to points in hom. coordinates
+    tri = triangulation.
+    """
+
+    im = toim.copy()
+
+    #check if image is grayscale or color
+    is_color = len(fromim.shape) == 3
+
+    #create image to warp to
+    im_t = np.zeros(im.shape, 'uint8')
+
+    for t in tri:
+        H = Homographies.Haffine_from_points(tp[:,t], fp[:,t])
+
+        if is_color:
+            for col in range(fromim.shape[2]):
+                im_t[:,:,col] = ndimage.affine_transform(fromim[:,:,col], H[:2,:2], (H[0,2], H[1,2]), im.shape[:2])
+        else:
+            im_t = ndimage.affine_transform(fromim,H[:2,:2], (H[0,2], H[1,2]), im.shape[:2])
+
+    # alpha for triangle
+    alpha = alpha_for_triangle(tp[:,t], im.shape[0], im.shape[1])
+
+    im[alpha>0] = im_t[alpha>0]
+
+    return im
 # %%
