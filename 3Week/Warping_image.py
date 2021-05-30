@@ -287,6 +287,6 @@ xmlFileName = '../data/jkfaces.xml'
 points = read_points_from_xml(xmlFileName)
 
 rigid_alignment(points, '../data/jkfaces/')
-
+.
 # %%
 
