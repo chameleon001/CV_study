@@ -47,3 +47,4 @@ tp2 = tp[:,:3]
 fp2 = fp[:,:3]
 
 H = Homographies.Haffine_from_points(tp2,fp2)
+im1_t = ndimage.affine_transform(im1,H[:2,:2], (H[0,2],H[1,2]),im2.shape[:2])
