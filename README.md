@@ -8,6 +8,6 @@ Computer Vision
 
 cs231n
 Programming 공부 : Programming Computer Visionwith Python -going
-
+ 시험끝
 (http://programmingcomputervision.com/)
 http://programmingcomputervision.com/downloads/ProgrammingComputerVision_CCdraft.pdf
